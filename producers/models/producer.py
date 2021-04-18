@@ -8,7 +8,8 @@ from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka.avro import AvroProducer
 
 logger = logging.getLogger(__name__)
-
+BROKER_URL = "PLAINTEXT://localhost:9092"
+SCHEMA_REGISTRY_URL = "http://localhost:8081"
 
 class Producer:
     """Defines and provides common functionality amongst Producers"""
@@ -38,8 +39,8 @@ class Producer:
         #
         #
         self.broker_properties = {
-            # TODO
-            # TODO
+            "bootstrap.servers": BROKER_URL,
+            "schema.registry.url": SCHEMA_REGISTRY_URL,
             # TODO
         }
 
@@ -49,8 +50,11 @@ class Producer:
             Producer.existing_topics.add(self.topic_name)
 
         # TODO: Configure the AvroProducer
-        # self.producer = AvroProducer(
-        # )
+        self.producer = AvroProducer(
+            self.broker_properties,
+            default_key_schema=key_schema,
+            default_value_schema=value_schema
+        )
 
     def create_topic(self):
         """Creates the producer topic if it does not already exist"""
@@ -60,7 +64,28 @@ class Producer:
         # the Kafka Broker.
         #
         #
-        logger.info("topic creation kafka integration incomplete - skipping")
+        client = AdminClient({"bootstrap.servers": BROKER_URL})
+        if self.topic_name in client.list_topics().topics:
+            return
+
+        futures = client.create_topics(
+            [
+                NewTopic(
+                    topic=self.topic_name,
+                    num_partitions=self.num_partitions,
+                    replication_factor=self.num_replicas,
+                    config={}
+                )
+            ]
+        )
+
+        for topic, future in futures.items():
+            try:
+                future.result()
+                logger.info("topic created")
+            except Exception as e:
+                logger.error(f"failed to create topic {self.topic_name}: {e}")
+                raise
 
     def time_millis(self):
         return int(round(time.time() * 1000))
@@ -72,7 +97,7 @@ class Producer:
         # TODO: Write cleanup code for the Producer here
         #
         #
-        logger.info("producer close incomplete - skipping")
+        self.producer.flush()
 
     def time_millis(self):
         """Use this function to get the key for Kafka Events"""

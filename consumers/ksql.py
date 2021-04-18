@@ -23,14 +23,23 @@ KSQL_URL = "http://localhost:8088"
 
 KSQL_STATEMENT = """
 CREATE TABLE turnstile (
-    ???
+    station_id BIGINT,
+    station_name VARCHAR,
+    line VARCHAR,
+    timestamp BIGINT
 ) WITH (
-    ???
+    VALUE_FORMAT='AVRO',
+    KEY='timestamp',
+    KAFKA_TOPIC='org.chicago.turnstile'
 );
 
 CREATE TABLE turnstile_summary
-WITH (???) AS
-    ???
+WITH (
+VALUE_FORMAT='JSON'
+) AS
+    SELECT station_id, COUNT(*) AS count
+  FROM turnstile
+  GROUP BY station_id;
 """
 
 
