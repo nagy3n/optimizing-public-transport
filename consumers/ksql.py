@@ -25,8 +25,7 @@ KSQL_STATEMENT = """
 CREATE TABLE turnstile (
     station_id BIGINT,
     station_name VARCHAR,
-    line VARCHAR,
-    timestamp BIGINT
+    line VARCHAR
 ) WITH (
     VALUE_FORMAT='AVRO',
     KEY='timestamp',
